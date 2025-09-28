@@ -1,109 +1,87 @@
-# =============================================================================
-# LAMBDA API FUNCTIONS
-# =============================================================================
-
-# Empaquetar código Lambda
-data "archive_file" "login_user" {
+# Empaquetar cada Lambda API
+data "archive_file" "login_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../lambda/api/loginUser"
-  output_path = "${path.module}/loginUser.zip"
+  output_path = "${path.module}/build/loginUser.zip"
 }
-
-data "archive_file" "list_events" {
+data "archive_file" "list_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../lambda/api/listEvents"
-  output_path = "${path.module}/listEvents.zip"
+  output_path = "${path.module}/build/listEvents.zip"
 }
-
-data "archive_file" "register_event" {
+data "archive_file" "register_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../lambda/api/registerEvent"
-  output_path = "${path.module}/registerEvent.zip"
+  output_path = "${path.module}/build/registerEvent.zip"
 }
 
-# =============================================================================
-# LAMBDA FUNCTIONS
-# =============================================================================
-
-# Login User Lambda
-resource "aws_lambda_function" "login_user" {
-  filename         = data.archive_file.login_user.output_path
-  function_name    = "${local.name_prefix}-login-user"
-  role            = aws_iam_role.lambda_exec_role.arn
-  handler         = "index.handler"
-  source_code_hash = data.archive_file.login_user.output_base64sha256
-  runtime         = "nodejs18.x"
-  timeout         = 30
-  memory_size     = 256
-
-  vpc_config {
-    subnet_ids         = aws_subnet.private[*].id
-    security_group_ids = [aws_security_group.lambda.id]
+# Variables comunes
+locals {
+  lambda_env = {
+    DB_HOST     = aws_db_instance.db.address
+    DB_NAME     = var.db_name
+    DB_USER     = var.db_username
+    DB_PASSWORD = var.db_password
+    DB_ENGINE   = var.db_engine
+    SQS_URL     = aws_sqs_queue.events.id
+    SES_SENDER  = var.ses_sender_email
   }
-
-  environment {
-    variables = {
-      RDS_ENDPOINT = aws_db_instance.main.endpoint
-      DB_NAME      = var.db_name
-      DB_USERNAME  = var.db_username
-      DB_PASSWORD  = random_password.db_password.result
-      JWT_SECRET   = var.jwt_secret
-    }
-  }
+  lambda_subnets = [aws_subnet.private_a.id, aws_subnet.private_b.id]
 }
 
-# List Events Lambda
-resource "aws_lambda_function" "list_events" {
-  filename         = data.archive_file.list_events.output_path
-  function_name    = "${local.name_prefix}-list-events"
-  role            = aws_iam_role.lambda_exec_role.arn
-  handler         = "index.handler"
-  source_code_hash = data.archive_file.list_events.output_base64sha256
-  runtime         = "nodejs18.x"
-  timeout         = 30
-  memory_size     = 256
+resource "aws_lambda_function" "login" {
+  function_name = "${var.project_name}-login"
+  filename      = data.archive_file.login_zip.output_path
+  source_code_hash = data.archive_file.login_zip.output_base64sha256
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  role          = aws_iam_role.lambda_role.arn
+  timeout       = 10
+  memory_size   = 128
 
   vpc_config {
-    subnet_ids         = aws_subnet.private[*].id
-    security_group_ids = [aws_security_group.lambda.id]
+    subnet_ids         = local.lambda_subnets
+    security_group_ids = [aws_security_group.lambda_sg.id]
   }
 
-  environment {
-    variables = {
-      RDS_ENDPOINT = aws_db_instance.main.endpoint
-      DB_NAME      = var.db_name
-      DB_USERNAME  = var.db_username
-      DB_PASSWORD  = random_password.db_password.result
-      JWT_SECRET   = var.jwt_secret
-    }
-  }
+  environment { variables = local.lambda_env }
+  tags = var.common_tags
 }
 
-# Register Event Lambda
-resource "aws_lambda_function" "register_event" {
-  filename         = data.archive_file.register_event.output_path
-  function_name    = "${local.name_prefix}-register-event"
-  role            = aws_iam_role.lambda_exec_role.arn
-  handler         = "index.handler"
-  source_code_hash = data.archive_file.register_event.output_base64sha256
-  runtime         = "nodejs18.x"
-  timeout         = 60
-  memory_size     = 512
+resource "aws_lambda_function" "list" {
+  function_name = "${var.project_name}-list-events"
+  filename      = data.archive_file.list_zip.output_path
+  source_code_hash = data.archive_file.list_zip.output_base64sha256
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  role          = aws_iam_role.lambda_role.arn
+  timeout       = 10
+  memory_size   = 128
 
   vpc_config {
-    subnet_ids         = aws_subnet.private[*].id
-    security_group_ids = [aws_security_group.lambda.id]
+    subnet_ids         = local.lambda_subnets
+    security_group_ids = [aws_security_group.lambda_sg.id]
   }
 
-  environment {
-    variables = {
-      RDS_ENDPOINT  = aws_db_instance.main.endpoint
-      DB_NAME       = var.db_name
-      DB_USERNAME   = var.db_username
-      DB_PASSWORD   = random_password.db_password.result
-      JWT_SECRET    = var.jwt_secret
-      SQS_QUEUE_URL = aws_sqs_queue.email_queue.url
-      AWS_REGION    = var.aws_region
-    }
+  environment { variables = local.lambda_env }
+  tags = var.common_tags
+}
+
+resource "aws_lambda_function" "register" {
+  function_name = "${var.project_name}-register"
+  filename      = data.archive_file.register_zip.output_path
+  source_code_hash = data.archive_file.register_zip.output_base64sha256
+  handler       = "index.handler"
+  runtime       = "nodejs20.x"
+  role          = aws_iam_role.lambda_role.arn
+  timeout       = 15
+  memory_size   = 256
+
+  vpc_config {
+    subnet_ids         = local.lambda_subnets
+    security_group_ids = [aws_security_group.lambda_sg.id]
   }
+
+  environment { variables = local.lambda_env }
+  tags = var.common_tags
 }

@@ -1,89 +1,29 @@
-# =============================================================================
-# BASIC CONFIGURATION
-# =============================================================================
+variable "region"        { type = string  default = "us-east-1" }
+variable "aws_profile"   { type = string  default = "default" }
+variable "project_name"  { type = string  default = "corpevent" }
 
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
-}
+# Networking
+variable "vpc_cidr"      { type = string  default = "10.20.0.0/16" }
+variable "public_a_cidr" { type = string  default = "10.20.0.0/24" }
+variable "public_b_cidr" { type = string  default = "10.20.1.0/24" }
+variable "priv_a_cidr"   { type = string  default = "10.20.10.0/24" }
+variable "priv_b_cidr"   { type = string  default = "10.20.11.0/24" }
 
-variable "environment" {
-  description = "Environment name"
-  type        = string
-  validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "Environment must be dev, staging, or prod."
-  }
-}
+# RDS
+variable "db_engine"     { type = string  default = "mysql" } # o "postgres"
+variable "db_engine_ver" { type = string  default = "8.0" }   # MySQL 8.0
+variable "db_name"       { type = string  default = "corpeventdb" }
+variable "db_username"   { type = string  default = "admin" }
+variable "db_password"   { type = string  sensitive = true default = "changeme123!" }
 
-variable "project_name" {
-  description = "Project name"
-  type        = string
-  default     = "corpevent"
-}
+# Frontend
+variable "s3_bucket_name" { type = string default = "corpevent-frontend-demo" }
 
-# =============================================================================
-# DATABASE
-# =============================================================================
+# SES
+variable "ses_sender_email" { type = string default = "noreply@example.com" }
 
-variable "db_name" {
-  description = "Database name"
-  type        = string
-  default     = "corpevent"
-}
-
-variable "db_username" {
-  description = "Database master username"
-  type        = string
-  default     = "admin"
-}
-
-variable "db_instance_class" {
-  description = "RDS instance class"
-  type        = string
-  default     = "db.t3.micro"
-}
-
-variable "db_allocated_storage" {
-  description = "Database allocated storage in GB"
-  type        = number
-  default     = 20
-}
-
-# =============================================================================
-# FRONTEND
-# =============================================================================
-
-variable "frontend_domain" {
-  description = "Frontend domain for CORS"
-  type        = string
-  default     = "*"
-}
-
-# =============================================================================
-# EMAIL (SES)
-# =============================================================================
-
-variable "ses_from_email" {
-  description = "From email address for SES"
-  type        = string
-  default     = "no-reply@corpevent.com"
-}
-
-variable "ses_domain" {
-  description = "Domain for SES (optional)"
-  type        = string
-  default     = ""
-}
-
-# =============================================================================
-# JWT
-# =============================================================================
-
-variable "jwt_secret" {
-  description = "JWT secret key"
-  type        = string
-  sensitive   = true
-  default     = ""
+# Tags
+variable "common_tags" {
+  type = map(string)
+  default = { project = "corpevent", owner = "student" }
 }

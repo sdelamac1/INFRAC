@@ -1,66 +1,41 @@
-# =============================================================================
-# IAM ROLES FOR LAMBDAS - SIMPLE VERSION
-# =============================================================================
-
-# Rol principal para todas las Lambdas
-resource "aws_iam_role" "lambda_exec_role" {
-  name = "${local.name_prefix}-lambda-role"
-  
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
+data "aws_iam_policy_document" "lambda_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals { type = "Service" identifiers = ["lambda.amazonaws.com"] }
+  }
 }
 
-# Política básica para logs y VPC
-resource "aws_iam_policy" "lambda_policy" {
-  name = "${local.name_prefix}-lambda-policy"
-  
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream", 
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:*:*:*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ec2:CreateNetworkInterface",
-          "ec2:DescribeNetworkInterfaces",
-          "ec2:DeleteNetworkInterface"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
+resource "aws_iam_role" "lambda_role" {
+  name               = "${var.project_name}-lambda-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+  tags = var.common_tags
 }
 
-# Adjuntar política básica
-resource "aws_iam_role_policy_attachment" "lambda_basic" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = aws_iam_policy.lambda_policy.arn
+# Logs, SQS, SES (envío), acceso básico S3 (si necesitas)
+data "aws_iam_policy_document" "lambda_policy" {
+  statement {
+    sid = "Logs"
+    actions   = ["logs:CreateLogGroup","logs:CreateLogStream","logs:PutLogEvents"]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+  statement {
+    sid = "SQS"
+    actions   = ["sqs:SendMessage","sqs:ReceiveMessage","sqs:DeleteMessage","sqs:GetQueueAttributes","sqs:ChangeMessageVisibility"]
+    resources = ["*"]
+  }
+  statement {
+    sid = "SES"
+    actions   = ["ses:SendEmail", "ses:SendRawEmail"]
+    resources = ["*"]
+  }
 }
 
-# SQS access
-resource "aws_iam_role_policy_attachment" "lambda_sqs" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
+resource "aws_iam_policy" "lambda_inline" {
+  name   = "${var.project_name}-lambda-policy"
+  policy = data.aws_iam_policy_document.lambda_policy.json
 }
 
-# SES access
-resource "aws_iam_role_policy_attachment" "lambda_ses" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+resource "aws_iam_role_policy_attachment" "attach" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_inline.arn
 }
