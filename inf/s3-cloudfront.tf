@@ -40,7 +40,11 @@ resource "aws_cloudfront_distribution" "cdn" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
 
-  restrictions { geo_restriction { restriction_type = "none" } }
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
 
   viewer_certificate {
     cloudfront_default_certificate = true
