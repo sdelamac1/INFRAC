@@ -15,6 +15,9 @@ El proyecto INFRAC implementa una arquitectura modular basada en **Infraestructu
 ## Estructura del Proyecto
 La estructura del repositorio está organizada de la siguiente manera:
 
+## DIAGRAMA
+![alt text](image.png)
+
 ```
 INFRAC/
 ├── frontend/
