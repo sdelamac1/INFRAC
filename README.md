@@ -51,7 +51,7 @@ La estructura del repositorio está organizada de la siguiente manera, separando
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [URL_DE_TU_REPO]
+    git clone https://github.com/sdelamac1/INFRAC
     ```
 
 2.  **Desplegar la infraestructura:**
