@@ -1,0 +1,27 @@
+# Archivos de estado y configuración de Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Archivos ZIP generados para las Lambdas
+*.zip
+
+# Carpetas de caché de Python
+__pycache__/
+*.pyc
+
+# Archivos del sistema operativo
+.DS_Store
+
+# Archivos de entorno virtual de Python
+/venv/
+/.venv/
+/env/
+/.env/
+
+# Excluir todo dentro de las carpetas de la aplicación...
+application/*/
+# ... excepto los archivos de código fuente importantes
+!application/*/*.py
+!application/*/*.txt
