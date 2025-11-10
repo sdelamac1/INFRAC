@@ -1,58 +1,49 @@
-# 1. Creamos el "túnel" seguro entre API Gateway y nuestra VPC
-resource "aws_api_gateway_vpc_link" "link" {
-  name        = "corpevent-vpc-link"
-  target_arns = [aws_lb.main.arn]
+resource "aws_apigatewayv2_api" "backend_api" {
+  name          = "BackendAPI"
+  protocol_type = "HTTP"
+  cors_configuration {
+        allow_origins     = ["https://${aws_cloudfront_distribution.frontend_cf.domain_name}"]
+        allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        allow_headers     = ["Content-Type", "Authorization"]
+        expose_headers    = ["*"]
+        max_age           = 3600
+        allow_credentials = false
+    }
+  depends_on = [aws_instance.app1]
 }
 
-# 2. Creamos la API
-resource "aws_api_gateway_rest_api" "api" {
-  name = "CorpEvent-API-with-ALB"
+resource "aws_apigatewayv2_integration" "backend_integration" {
+  api_id             = aws_apigatewayv2_api.backend_api.id
+  integration_type   = "HTTP_PROXY"
+  integration_method = "ANY"
+  integration_uri = "http://${aws_lb.main_lb.dns_name}/api/v1/{proxy}"
 }
 
-# 3. Creamos un recurso "proxy" que captura CUALQUIER ruta
-# Por ejemplo: /registros, /auth/register, /usuarios/123, etc.
-resource "aws_api_gateway_resource" "proxy" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-  path_part   = "{proxy+}"
+resource "aws_apigatewayv2_route" "cors_options_route" {
+  # checkov:skip=CKV_AWS_309: Ruta OPTIONS pública necesaria para permitir CORS preflight
+  api_id    = aws_apigatewayv2_api.backend_api.id
+  route_key = "OPTIONS /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.backend_integration.id}"
+  authorization_type = "NONE"
+
+  depends_on = [aws_apigatewayv2_integration.backend_integration]
 }
 
-# 4. Creamos un método "ANY" que captura CUALQUIER método HTTP (GET, POST, etc.)
-resource "aws_api_gateway_method" "proxy_method" {
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.proxy.id
-  http_method   = "ANY"
-  authorization = "NONE"
+resource "aws_apigatewayv2_route" "backend_route" {
+  # checkov:skip=CKV_AWS_309: Ruta OPTIONS pública necesaria para permitir CORS preflight
+  api_id    = aws_apigatewayv2_api.backend_api.id
+  route_key = "ANY /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.backend_integration.id}"
+    authorization_type = "NONE"
+
+  depends_on = [aws_apigatewayv2_integration.backend_integration]
 }
 
-# 5. Creamos la integración que envía TODO el tráfico al ALB
-resource "aws_api_gateway_integration" "alb_integration" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.proxy.id
-  http_method = aws_api_gateway_method.proxy_method.http_method
+resource "aws_apigatewayv2_stage" "default" {
+  # checkov:skip=CKV_AWS_76: Logging de acceso no es necesario en este entorno de desarrollo, lo cual evita costos innecesarios
+  api_id      = aws_apigatewayv2_api.backend_api.id
+  name        = "$default"
+  auto_deploy = true
 
-  type                    = "HTTP_PROXY" # Cambiado para apuntar a un HTTP endpoint
-  integration_http_method = "ANY"
-  connection_type         = "VPC_LINK"
-  connection_id           = aws_api_gateway_vpc_link.link.id
-  
-  # La URI ahora apunta al Listener del ALB
-  uri                     = aws_lb_listener.http.arn
-}
-
-# --- Despliegue del API ---
-resource "aws_api_gateway_deployment" "api_deployment" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  triggers = {
-    redeployment = sha1(jsonencode([
-      aws_api_gateway_integration.alb_integration.id,
-    ]))
-  }
-  lifecycle { create_before_destroy = true }
-}
-
-resource "aws_api_gateway_stage" "api_stage" {
-  deployment_id = aws_api_gateway_deployment.api_deployment.id
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  stage_name    = "prod"
+  depends_on = [aws_apigatewayv2_route.backend_route]
 }

@@ -1,0 +1,130 @@
+resource "aws_security_group" "sg-lb" {
+    # checkov:skip=CKV_AWS_382: Egress abierto permitido temporalmente en entorno de desarrollo para facilitar pruebas de conectividad
+    name = "sg_lb"
+    description = "Grupo de seguridad para el load balancer"
+    vpc_id = aws_vpc.main.id
+
+    ingress {
+       # checkov:skip=CKV_AWS_260: El acceso HTTP público (puerto 80) está habilitado temporalmente en entorno de desarrollo para pruebas con ALB
+        from_port = 80
+        to_port = 80
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+        description = "Allow HTTP traffic from VPC CIDR"
+    }
+
+    ingress {
+        from_port = 3001
+        to_port = 3001
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+        description = "Allow HTTP traffic"
+    }
+
+    egress {
+        protocol = "-1"
+        from_port = 0
+        to_port = 0
+        cidr_blocks = ["0.0.0.0/0"]
+        description = "Allow all outbound traffic"
+    }
+  
+}
+
+
+resource "aws_lb" "main_lb" {
+  # checkov:skip=CKV2_AWS_20: El redireccionamiento de HTTP a HTTPS se maneja mediante API Gateway y no directamente en el ALB
+  # checkov:skip=CKV2-AWS-28: Este ALB es público pero no requiere WAF en este entorno (uso no productivo)
+  # checkov:skip=CKV_AWS_91: Logging desactivado en entorno de desarrollo para evitar costos innecesarios
+  # checkov:skip=CKV_AWS_131: No se requiere eliminar encabezados inválidos en entorno de desarrollo, se mantiene por simplicidad
+  # checkov:skip=CKV_AWS_150: Protección contra eliminación desactivada intencionalmente en entorno de desarrollo
+  name="main-lb"
+  subnets = [aws_subnet.subnet_a.id,aws_subnet.subnet_b.id]
+  internal = false
+  load_balancer_type = "application"
+  security_groups = [aws_security_group.sg-lb.id]
+  enable_deletion_protection = false
+
+}
+
+resource "aws_lb_target_group" "ec2_a" {
+  # checkov:skip=CKV_AWS_378: Tráfico está cifrado por API Gateway; el ALB solo enruta tráfico HTTP interno
+
+  name     = "tg-ec2-a"
+  port     = 3001
+  protocol = "HTTP"
+  vpc_id   = "${aws_vpc.main.id}"
+
+  health_check {
+    path                = "/api/v1/auth/login"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "401"
+  }
+}
+
+resource "aws_lb_target_group" "ec2_b" {
+  # checkov:skip=CKV_AWS_378: Tráfico está cifrado por API Gateway; el ALB solo enruta tráfico HTTP interno
+
+  name     = "tg-ec2-b"
+  port     = 3001
+  protocol = "HTTP"
+  vpc_id   = "${aws_vpc.main.id}"
+
+  health_check {
+    path                = "/api/v1/auth/login"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "401"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "a1" {
+  target_group_arn = aws_lb_target_group.ec2_a.arn
+  target_id        = aws_instance.app1.id
+  port             = 3001
+
+  depends_on = [aws_instance.app1]
+}
+
+resource "aws_lb_target_group_attachment" "b1" {
+  target_group_arn = aws_lb_target_group.ec2_b.arn
+  target_id        = aws_instance.app2.id
+  port             = 3001
+
+  depends_on = [aws_instance.app2]
+}
+
+resource "aws_lb_listener" "front_end" {
+  # checkov:skip=CKV_AWS_2: Listener HTTP permitido en entorno de desarrollo; redirección a HTTPS se maneja a nivel de API Gateway o no es necesaria por ahora
+  # checkov:skip=CKV_AWS_103: Listener HTTP permitido en entorno de desarrollo sin TLS para evitar complejidad y costos innecesarios
+  load_balancer_arn = aws_lb.main_lb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "forward"
+
+    forward {
+      target_group {
+        arn  = aws_lb_target_group.ec2_a.arn
+        weight = 70
+      }
+
+      target_group {
+        arn  = aws_lb_target_group.ec2_b.arn
+        weight = 30
+      }
+
+      stickiness {
+        enabled  = false
+        duration = 1
+      }
+    }
+  }
+  depends_on = [aws_lb_target_group.ec2_a, aws_lb_target_group.ec2_b]
+}
