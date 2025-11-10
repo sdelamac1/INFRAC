@@ -51,7 +51,7 @@ resource "aws_instance" "app1" {
   instance_type               = "t2.micro"
   subnet_id                   = "${aws_subnet.subnet_a.id}"
   vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
-  associate_public_ip_address = false
+  associate_public_ip_address = true
   ebs_optimized = true
 
   user_data = <<-EOF

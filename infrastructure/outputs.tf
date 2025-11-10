@@ -34,3 +34,12 @@ output "url_front" {
   value       = "https://${aws_cloudfront_distribution.frontend_cf.domain_name}"
 }
 
+output "api_gateway_url" {
+  description = "URL pública del API Gateway"
+  value       = aws_apigatewayv2_stage.default.invoke_url
+}
+
+output "lb-dns-name" {
+  description = "Dns del load balancer"
+  value = aws_lb.main_lb.dns_name
+}
