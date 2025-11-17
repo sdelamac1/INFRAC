@@ -1,0 +1,14 @@
+# Ignorar estado local
+*.tfstate
+*.tfstate.backup
+
+# Ignorar secretos locales
+*.tfvars
+
+# Ignorar llaves SSH (MUY IMPORTANTE)
+my-aws-key
+my-aws-key.pub
+
+# Ignorar carpetas temporales y de caché
+frontend_temp/
+.terraform/
