@@ -5,7 +5,7 @@ name: Deploy a AWS (Terraform Apply)
 on:
   push:
     branches:
-      - iac-develop  # Se ejecuta CADA VEZ que haces push a esta rama
+      - develop  # Se ejecuta CADA VEZ que haces push a esta rama
 
 # El "Trabajo": Qué es lo que va a hacer
 jobs:
