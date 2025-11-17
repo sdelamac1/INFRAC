@@ -1,24 +1,36 @@
-# Nombre de tu pipeline (robot)
 name: Deploy a AWS (Terraform Apply)
 
-# El "Gatillo": Cuándo se va a ejecutar
 on:
   push:
     branches:
-      - develop  # Se ejecuta CADA VEZ que haces push a esta rama
+      - develop  # ¡Arreglado para tu rama!
 
-# El "Trabajo": Qué es lo que va a hacer
 jobs:
   deploy:
-    # La máquina que GitHub te presta (es Ubuntu Linux)
     runs-on: ubuntu-latest
 
-    # Directorio de trabajo (importante, porque tus .tf están en 'infrastructure')
+    # ¡¡EL CAMBIO ESTÁ AQUÍ!!
+    # Ponemos las llaves y variables para TODO el job
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_mongodb_public_key: ${{ secrets.TF_VAR_MONGODB_PUBLIC_KEY }}
+      TF_VAR_mongodb_private_key: ${{ secrets.TF_VAR_MONGODB_PRIVATE_KEY }}
+      TF_VAR_mongodb_org_id: ${{ secrets.TF_VAR_MONGODB_ORG_ID }}
+      TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+      TF_VAR_port: ${{ secrets.TF_VAR_PORT }}
+      TF_VAR_jwt_secret: ${{ secrets.TF_VAR_JWT_SECRET }}
+      TF_VAR_brevo_email: ${{ secrets.TF_VAR_BREVO_EMAIL }}
+      TF_VAR_brevo_name: ${{ secrets.TF_VAR_BREVO_NAME }}
+      TF_VAR_apis_peru_key: ${{ secrets.TF_VAR_APIS_PERU_KEY }}
+      TF_VAR_migo_api_key: ${{ secrets.TF_VAR_MIGO_API_KEY }}
+      TF_VAR_factiliza_key: ${{ secrets.TF_VAR_FACTILIZA_KEY }}
+      TF_VAR_apis_net_pe: ${{ secrets.TF_VAR_APIS_NET_PE }}
+
     defaults:
       run:
-        working-directory: ./infrastructure
+        working-directory: ./infrastructure # Le decimos que trabaje en la carpeta infrastructure
 
-    # Los pasos que va a correr
     steps:
       # 1. Trae tu código del repositorio
       - name: Checkout
@@ -28,33 +40,10 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # 3. Corre 'terraform init'
-      #    Aquí le pasamos las "llaves" de forma segura
+      # 3. Corre 'terraform init' (ya no necesita el 'env:')
       - name: Terraform Init
         run: terraform init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      # 4. Corre 'terraform apply'
-      #    Aquí le pasamos TODAS tus variables de terraform.tfvars
+      # 4. Corre 'terraform apply' (ya no necesita el 'env:')
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        env:
-          # Llaves de AWS
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          
-          # Tus variables de .tfvars
-          TF_VAR_mongodb_public_key: ${{ secrets.TF_VAR_MONGODB_PUBLIC_KEY }}
-          TF_VAR_mongodb_private_key: ${{ secrets.TF_VAR_MONGODB_PRIVATE_KEY }}
-          TF_VAR_mongodb_org_id: ${{ secrets.TF_VAR_MONGODB_ORG_ID }}
-          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
-          TF_VAR_port: ${{ secrets.TF_VAR_PORT }}
-          TF_VAR_jwt_secret: ${{ secrets.TF_VAR_JWT_SECRET }}
-          TF_VAR_brevo_email: ${{ secrets.TF_VAR_BREVO_EMAIL }}
-          TF_VAR_brevo_name: ${{ secrets.TF_VAR_BREVO_NAME }}
-          TF_VAR_apis_peru_key: ${{ secrets.TF_VAR_APIS_PERU_KEY }}
-          TF_VAR_migo_api_key: ${{ secrets.TF_VAR_MIGO_API_KEY }}
-          TF_VAR_factiliza_key: ${{ secrets.TF_VAR_FACTILIZA_KEY }}
-          TF_VAR_apis_net_pe: ${{ secrets.TF_VAR_APIS_NET_PE }}
