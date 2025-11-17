@@ -12,7 +12,7 @@ Proyecto de Infraestructura como Código (IaC) para la automatización y gestió
 ---
 ## Diagrama de Arquitectura
 
-![Diagrama de la arquitectura en AWS](image.jpg)
+![Diagrama de la arquitectura en AWS](image.jpeg)
 
 ---
 ## Estructura del Proyecto
