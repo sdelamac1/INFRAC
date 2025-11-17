@@ -3,14 +3,12 @@ name: Deploy a AWS (Terraform Apply)
 on:
   push:
     branches:
-      - develop  # ¡Arreglado para tu rama!
+      - develop
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # ¡¡EL CAMBIO ESTÁ AQUÍ!!
-    # Ponemos las llaves y variables para TODO el job
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -29,21 +27,17 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./infrastructure # Le decimos que trabaje en la carpeta infrastructure
+        working-directory: ./infrastructure
 
     steps:
-      # 1. Trae tu código del repositorio
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Instala el programa Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # 3. Corre 'terraform init' (ya no necesita el 'env:')
       - name: Terraform Init
         run: terraform init
 
-      # 4. Corre 'terraform apply' (ya no necesita el 'env:')
       - name: Terraform Apply
         run: terraform apply -auto-approve
