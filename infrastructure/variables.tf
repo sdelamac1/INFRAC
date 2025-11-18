@@ -56,11 +56,12 @@ variable "apis_net_pe" {
   type = string
 }
 
-locals {
-  mongo_uri = "mongodb+srv://${var.db_username}:${var.db_password}@${replace(mongodbatlas_cluster.cluster.connection_strings[0].standard_srv, "mongodb+srv://", "")}/chambea?retryWrites=true&w=majority&appName=${var.project_name}"
-}
-
 variable "EXISTING_PROJECT_ID" {
   description = "El ID de mi Project 0 que ya tiene los datos"
+  type        = string
+}
+
+variable "MONGO_CONNECTION_URI" {
+  description = "La URL SRV completa para conectar la app a MongoDB Atlas."
   type        = string
 }

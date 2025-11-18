@@ -24,11 +24,6 @@ output "aws_subnet_public_subnet-us-est-1b" {
   value       = aws_subnet.subnet_b.id
 }
 
-output "connection_string" {
-  value = "mongodb+srv://${var.db_username}:${var.db_password}@${replace(mongodbatlas_cluster.cluster.connection_strings[0].standard_srv, "mongodb+srv://", "")}/chambea?retryWrites=true&w=majority&appName=${var.project_name}"
-  sensitive = true
-}
-
 output "url_front" {
   description = "URL del frontend en CloudFront"
   value       = "https://${aws_cloudfront_distribution.frontend_cf.domain_name}"

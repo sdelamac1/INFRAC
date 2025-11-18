@@ -158,7 +158,7 @@ sudo npm install
 
 cat <<EOT > .env
 PORT=3001
-MONGODB_URI=mongodb+srv://admin:admin123@chambeaperu.2kyplqv.mongodb.net/chambea?retryWrites=true&w=majority&appName=chambeaPeru-iac
+MONGODB_URI=${var.MONGO_CONNECTION_URI}
 JWT_SECRET=superMegaUltraSecretoDeChambeaPeru2025!@#$
 BREVO_SENDER_EMAIL=dangamerby12@gmail.com
 BREVO_SENDER_NAME=Chambea Perú
@@ -291,7 +291,7 @@ sudo npm install
 
 cat <<EOT > .env
 PORT=3001
-MONGODB_URI=mongodb+srv://admin:admin123@chambeaperu.2kyplqv.mongodb.net/chambea?retryWrites=true&w=majority&appName=chambeaPeru-iac
+MONGODB_URI=${var.MONGO_CONNECTION_URI}
 JWT_SECRET=superMegaUltraSecretoDeChambeaPeru2025!@#$
 BREVO_SENDER_EMAIL=dangamerby12@gmail.com
 BREVO_SENDER_NAME=Chambea Perú
