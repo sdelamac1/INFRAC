@@ -56,14 +56,16 @@ resource "aws_lb_target_group" "ec2_a" {
   vpc_id   = "${aws_vpc.main.id}"
 
   health_check {
-    path                = "/api/v1/auth/login"
+    enabled             = true
+    path                = "/"
+    matcher             = "200"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
-    matcher             = "401"
+    protocol            = "HTTP"
+    }
   }
-}
 
 resource "aws_lb_target_group" "ec2_b" {
   # checkov:skip=CKV_AWS_378: Tráfico está cifrado por API Gateway; el ALB solo enruta tráfico HTTP interno
@@ -74,12 +76,14 @@ resource "aws_lb_target_group" "ec2_b" {
   vpc_id   = "${aws_vpc.main.id}"
 
   health_check {
-    path                = "/api/v1/auth/login"
+    enabled             = true
+    path                = "/"
+    matcher             = "200"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
-    matcher             = "401"
+    protocol            = "HTTP"
   }
 }
 
