@@ -78,30 +78,35 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
   ]
 }
 
-resource "aws_s3_bucket_public_access_block" "frontend_block" {
-  bucket = aws_s3_bucket.frontend.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 resource "null_resource" "upload_frontend" {
   triggers = {
+    api_url = aws_apigatewayv2_stage.default.invoke_url
     always_run = timestamp()
   }
 
   provisioner "local-exec" {
-    command = <<EOT
-      if [ ! -d "./frontend_temp" ]; then
-        git clone -b iac-develop https://github.com/sdelama1/chambea-peru.git frontend_temp
-      fi
-
+    command = <<-EOT
+      # 1. Limpiar y clonar fresco
+      rm -rf ./frontend_temp
+      git clone -b iac-develop https://github.com/sdelama1/chambea-peru.git frontend_temp
+      
+      # 2. Entrar a la carpeta
       cd frontend_temp/Frontend || exit 1
 
+      # 3. Reemplazar el marcador por la URL real
+      API_URL="${aws_apigatewayv2_stage.default.invoke_url}"
+      API_URL=$${API_URL%/}
+
+      echo "Inyectando URL del Backend: $API_URL"
+
+      grep -rFl '__BACKEND_URL__' . | xargs sed -i "s|__BACKEND_URL__|$API_URL|g"
+
+      # 4. Subir al S3
       aws s3 sync . s3://${aws_s3_bucket.frontend.bucket} --delete
     EOT
+    
     interpreter = ["/bin/bash", "-c"]
   }
+  
+  depends_on = [aws_s3_bucket.frontend, aws_apigatewayv2_stage.default]
 }
