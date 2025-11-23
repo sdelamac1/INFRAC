@@ -125,8 +125,8 @@ resource "aws_lb_listener" "front_end" {
       }
 
       stickiness {
-        enabled  = false
-        duration = 1
+        enabled  = true
+        duration = 3600
       }
     }
   }
