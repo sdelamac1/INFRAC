@@ -36,6 +36,7 @@ resource "aws_instance" "app1" {
   subnet_id                   = "${aws_subnet.subnet_a.id}"
   vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
   associate_public_ip_address = true
+  iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
   ebs_optimized = true
   root_block_device { encrypted = true }
   metadata_options { http_tokens = "required" }
@@ -47,17 +48,25 @@ set -xe
 echo "Esperando red..."
 sleep 30
 
-# 1. INSTALAR PAQUETES DEL SISTEMA 
+# INSTALAR PAQUETES DEL SISTEMA 
 sudo dnf clean all
 sudo dnf makecache
 sudo dnf install -y git
 sudo dnf install -y nodejs
 sudo dnf install -y npm
+sudo dnf install -y git nodejs npm amazon-cloudwatch-agent
 
-# 2. INSTALAR PROMETHEUS Y NODE EXPORTER 
+# CONFIGURAR Y ARRANCAR CLOUDWATCH AGENT
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+    -a fetch-config \
+    -m ec2 \
+    -c ssm:AmazonCloudWatch-Config \
+    -s
+    
+# INSTALAR PROMETHEUS Y NODE EXPORTER 
 echo "Instalando Node Exporter y Prometheus..."
 
-# 2.1 Instalar Node Exporter (Métricas de la máquina)
+# Instalar Node Exporter
 sudo useradd --no-create-home --shell /bin/false node_exporter
 wget https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz
 tar xvf node_exporter-1.7.0.linux-amd64.tar.gz
@@ -82,7 +91,7 @@ sudo systemctl daemon-reload
 sudo systemctl start node_exporter
 sudo systemctl enable node_exporter
 
-# 2.2 Instalar Prometheus (Servidor de monitoreo)
+# Instalar Prometheus
 sudo useradd --no-create-home --shell /bin/false prometheus
 sudo mkdir /etc/prometheus
 sudo mkdir /var/lib/prometheus
@@ -96,7 +105,7 @@ sudo mv prometheus-2.53.1.linux-amd64/consoles /etc/prometheus
 sudo mv prometheus-2.53.1.linux-amd64/console_libraries /etc/prometheus
 rm -rf prometheus-2.53.1.linux-amd64*
 
-# 2.3 Configurar Prometheus (CON INDENTACIÓN CORRECTA)
+# Configurar Prometheus
 sudo cat <<EOT_CONFIG > /etc/prometheus/prometheus.yml
 global:
   scrape_interval: 15s
@@ -109,7 +118,7 @@ EOT_CONFIG
 
 sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
 
-# 2.4 Crear servicio de Prometheus (CON INDENTACIÓN CORRECTA)
+# Crear servicio de Prometheus
 sudo cat <<EOT_PROMETHEUS_SERVICE > /etc/systemd/system/prometheus.service
 [Unit]
 Description=Prometheus
@@ -133,7 +142,7 @@ sudo systemctl start prometheus
 sudo systemctl enable prometheus
 echo "Instalación de monitoreo completa."
 
-# 3. INSTALAR TU APLICACIÓN 
+# INSTALAR TU APLICACIÓN 
 sudo mkdir -p /opt/backend
 cd /opt/backend
 sudo git clone -b iac-develop https://github.com/sdelama1/chambea-peru.git chamba-api
@@ -182,17 +191,25 @@ set -xe
 echo "Esperando red..."
 sleep 30
 
-# 1. INSTALAR PAQUETES DEL SISTEMA 
+# INSTALAR PAQUETES DEL SISTEMA 
 sudo dnf clean all
 sudo dnf makecache
 sudo dnf install -y git
 sudo dnf install -y nodejs
 sudo dnf install -y npm
+sudo dnf install -y git nodejs npm amazon-cloudwatch-agent
 
-# 2. INSTALAR PROMETHEUS Y NODE EXPORTER 
+# CONFIGURAR Y ARRANCAR CLOUDWATCH AGENT
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+    -a fetch-config \
+    -m ec2 \
+    -c ssm:AmazonCloudWatch-Config \
+    -s
+
+# INSTALAR PROMETHEUS Y NODE EXPORTER 
 echo "Instalando Node Exporter y Prometheus..."
 
-# 2.1 Instalar Node Exporter (Métricas de la máquina)
+# Instalar Node Exporter
 sudo useradd --no-create-home --shell /bin/false node_exporter
 wget https://github.com/prometheus/node_exporter/releases/download/v1.7.0/node_exporter-1.7.0.linux-amd64.tar.gz
 tar xvf node_exporter-1.7.0.linux-amd64.tar.gz
@@ -217,7 +234,7 @@ sudo systemctl daemon-reload
 sudo systemctl start node_exporter
 sudo systemctl enable node_exporter
 
-# 2.2 Instalar Prometheus (Servidor de monitoreo)
+# Instalar Prometheus
 sudo useradd --no-create-home --shell /bin/false prometheus
 sudo mkdir /etc/prometheus
 sudo mkdir /var/lib/prometheus
@@ -231,7 +248,7 @@ sudo mv prometheus-2.53.1.linux-amd64/consoles /etc/prometheus
 sudo mv prometheus-2.53.1.linux-amd64/console_libraries /etc/prometheus
 rm -rf prometheus-2.53.1.linux-amd64*
 
-# 2.3 Configurar Prometheus (CON INDENTACIÓN CORRECTA)
+# Configurar Prometheus
 sudo cat <<EOT_CONFIG > /etc/prometheus/prometheus.yml
 global:
   scrape_interval: 15s
@@ -244,7 +261,7 @@ EOT_CONFIG
 
 sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
 
-# 2.4 Crear servicio de Prometheus (CON INDENTACIÓN CORRECTA)
+# Crear servicio de Prometheus
 sudo cat <<EOT_PROMETHEUS_SERVICE > /etc/systemd/system/prometheus.service
 [Unit]
 Description=Prometheus
@@ -268,7 +285,7 @@ sudo systemctl start prometheus
 sudo systemctl enable prometheus
 echo "Instalación de monitoreo completa."
 
-# 3. INSTALAR TU APLICACIÓN 
+# INSTALAR TU APLICACIÓN 
 sudo mkdir -p /opt/backend
 cd /opt/backend
 sudo git clone -b iac-develop https://github.com/sdelama1/chambea-peru.git chamba-api
