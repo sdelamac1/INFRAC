@@ -53,33 +53,3 @@ resource "aws_route_table_association" "b" {
   subnet_id      = aws_subnet.subnet_b.id
   route_table_id = aws_route_table.public.id
 }
-
-
-# --- 5. Security Groups ---
-resource "aws_security_group" "lambda_sg" {
-  name   = "lambda-sg"
-  vpc_id = aws_vpc.main.id
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "rds_sg" {
-  name   = "rds-sg"
-  vpc_id = aws_vpc.main.id
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.lambda_sg.id]
-  }
-  ingress {
-    from_port = 5432
-    to_port   = 5432
-    protocol  = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Permite la conexión desde tu Codespace
-  }
-}

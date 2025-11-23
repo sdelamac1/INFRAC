@@ -37,6 +37,8 @@ resource "aws_instance" "app1" {
   vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
   associate_public_ip_address = true
   ebs_optimized = true
+  root_block_device { encrypted = true }
+  metadata_options { http_tokens = "required" }
 
   user_data = <<-EOF
 #!/bin/bash
@@ -170,6 +172,8 @@ resource "aws_instance" "app2" {
   vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
   associate_public_ip_address = true
   ebs_optimized = true
+  root_block_device { encrypted = true }
+  metadata_options { http_tokens = "required" }
 
   user_data = <<-EOF
 #!/bin/bash
