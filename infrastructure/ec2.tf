@@ -142,13 +142,13 @@ sudo npm install
 cat <<EOT > .env
 PORT=3001
 MONGODB_URI=${var.MONGO_CONNECTION_URI}
-JWT_SECRET=superMegaUltraSecretoDeChambeaPeru2025!@#$
-BREVO_SENDER_EMAIL=dangamerby12@gmail.com
-BREVO_SENDER_NAME=Chambea Perú
-APIS_PERU_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImZmZXJ0b3JyZXMxMkBnbWFpbC5jb20ifQ.Rohdvwz_gGV7fMNnnit9ykYvWOCIu8ifoKTSj9_Pd2o
-MIGO_API_KEY=VJAB4Was3tjfWXkEQ4ViuteyDcmwoJedrZ25zg1ky5trE5TrCE1pyhcg4r7d
-FACTILIZA_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODk3NSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6ImNvbnN1bHRvciJ9.Xv_6EC1pTnI1n_iJD61Irq77q9Nhgurp13RFu-z98H8
-APIS_NET_PE_DNI_KEY=sk_11501.j0fGHm4jUrMCFjU4RXKq8EUQUDDoPWsH
+JWT_SECRET=${var.jwt_secret}
+BREVO_SENDER_EMAIL=${var.brevo_email}
+BREVO_SENDER_NAME=${var.brevo_name}
+APIS_PERU_KEY=${var.apis_peru_key}
+MIGO_API_KEY=${var.migo_api_key}
+FACTILIZA_API_KEY=${var.factiliza_key}
+APIS_NET_PE_DNI_KEY=${var.apis_net_pe}
 EOT
 
 sudo npm install -g pm2
@@ -275,13 +275,13 @@ sudo npm install
 cat <<EOT > .env
 PORT=3001
 MONGODB_URI=${var.MONGO_CONNECTION_URI}
-JWT_SECRET=superMegaUltraSecretoDeChambeaPeru2025!@#$
-BREVO_SENDER_EMAIL=dangamerby12@gmail.com
-BREVO_SENDER_NAME=Chambea Perú
-APIS_PERU_KEY=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImZmZXJ0b3JyZXMxMkBnbWFpbC5jb20ifQ.Rohdvwz_gGV7fMNnnit9ykYvWOCIu8ifoKTSj9_Pd2o
-MIGO_API_KEY=VJAB4Was3tjfWXkEQ4ViuteyDcmwoJedrZ25zg1ky5trE5TrCE1pyhcg4r7d
-FACTILIZA_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzODk3NSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6ImNvbnN1bHRvciJ9.Xv_6EC1pTnI1n_iJD61Irq77q9Nhgurp13RFu-z98H8
-APIS_NET_PE_DNI_KEY=sk_11501.j0fGHm4jUrMCFjU4RXKq8EUQUDDoPWsH
+JWT_SECRET=${var.jwt_secret}
+BREVO_SENDER_EMAIL=${var.brevo_email}
+BREVO_SENDER_NAME=${var.brevo_name}
+APIS_PERU_KEY=${var.apis_peru_key}
+MIGO_API_KEY=${var.migo_api_key}
+FACTILIZA_API_KEY=${var.factiliza_key}
+APIS_NET_PE_DNI_KEY=${var.apis_net_pe}
 EOT
 
 sudo npm install -g pm2
